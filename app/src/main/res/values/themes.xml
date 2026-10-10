@@ -1,0 +1,9 @@
+<resources>
+    <color name="mono_bg">#FFF5F5F5</color>
+    <style name="Theme.Mono" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/mono_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
