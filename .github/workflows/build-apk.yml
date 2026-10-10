@@ -1,71 +1,64 @@
+```yaml
 name: Build MONO APK
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "app/**"
+      - ".github/workflows/build-apk.yml"
+      - "*.gradle.kts"
+      - "gradle/**"
+      - "gradle.properties"
 
 permissions:
   contents: read
 
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-latest
-
-    env:
-      ANDROID_HOME: /usr/local/lib/android/sdk
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
-      - name: Find Android SDK tools
-        shell: bash
-        run: |
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
-          if [ -z "$SDKMANAGER" ]; then
-            echo "ERROR: Android SDK command-line tools not found."
-            exit 1
-          fi
-          echo "SDKMANAGER=$SDKMANAGER" >> "$GITHUB_ENV"
-          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
-          echo "Found sdkmanager: $SDKMANAGER"
-
-      - name: Accept SDK licenses
-        shell: bash
-        run: |
-          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses || true
-
-      - name: Install Android SDK packages
-        shell: bash
-        run: |
-          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" \
-            "platforms;android-34" \
-            "build-tools;34.0.0" \
-            "platform-tools"
-
-      - name: Extract MONO project
-        shell: bash
-        run: |
-          unzip -q MONO.zip -d .
-          test -f MONO/settings.gradle.kts
-
-      - name: Set up Gradle 8.7
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.7'
+          gradle-version: "8.7"
 
-      - name: Compile APK
-        run: gradle -p MONO assembleDebug
+      - name: Set up Android SDK
+        run: |
+          SDK_ROOT="$ANDROID_HOME"
+          SDKMANAGER=$(find "$SDK_ROOT" -name sdkmanager -type f | head -n 1)
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager was not found."
+            exit 1
+          fi
+
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+
+          "$SDKMANAGER" \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0"
+
+      - name: Build debug APK
+        run: gradle assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: MONO-debug-APK
-          path: MONO/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          retention-days: 14
+```
