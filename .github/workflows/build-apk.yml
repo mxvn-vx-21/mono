@@ -3,13 +3,6 @@ name: Build MONO APK
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "app/**"
-      - ".github/workflows/build-apk.yml"
-      - "*.gradle.kts"
-      - "gradle/**"
-      - "gradle.properties"
 
 permissions:
   contents: read
@@ -36,11 +29,11 @@ jobs:
 
       - name: Set up Android SDK
         run: |
-          SDK_ROOT="$ANDROID_HOME"
+          SDK_ROOT="${ANDROID_HOME}"
           SDKMANAGER=$(find "$SDK_ROOT" -name sdkmanager -type f | head -n 1)
 
           if [ -z "$SDKMANAGER" ]; then
-            echo "sdkmanager was not found."
+            echo "sdkmanager was not found"
             exit 1
           fi
 
